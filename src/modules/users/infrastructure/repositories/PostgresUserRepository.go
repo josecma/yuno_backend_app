@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"yuno/src/common/database/models"
 	"yuno/src/modules/users/domain/entities"
 	"yuno/src/modules/users/domain/repositories"
+	"yuno/src/modules/users/infrastructure/mappers"
 
 	"gorm.io/gorm"
 )
@@ -18,15 +20,15 @@ func NewPostgresUserRepository(db *gorm.DB) repositories.UserRepository {
 
 func (r *PostgresUserRepository) Save(ctx context.Context, user *entities.User) error {
 
-	dbUser := toDBModel(user)
+	dbUser := mappers.FromDomainEntityToDatabaseModel(user)
 
 	return r.db.WithContext(ctx).Save(dbUser).Error
 }
 
 func (r *PostgresUserRepository) RetrieveByID(ctx context.Context, id string) (*entities.User, error) {
-	var dbUser UserModel
 
-	// Buscar en DB
+	var dbUser models.User
+
 	err := r.db.WithContext(ctx).
 		Where("id = ?", id).
 		First(&dbUser).Error
@@ -35,13 +37,13 @@ func (r *PostgresUserRepository) RetrieveByID(ctx context.Context, id string) (*
 		return nil, err
 	}
 
-	// Convertir modelo DB a entidad de dominio
-	return toDomainEntity(&dbUser), nil
+	return mappers.FromDatabaseModelToDomainEntity(&dbUser), nil
+
 }
 
-// RetrieveByEmail implementa el método de la interfaz
 func (r *PostgresUserRepository) RetrieveByEmail(ctx context.Context, email string) (*entities.User, error) {
-	var dbUser UserModel
+
+	var dbUser models.User
 
 	err := r.db.WithContext(ctx).
 		Where("email = ?", email).
@@ -51,27 +53,6 @@ func (r *PostgresUserRepository) RetrieveByEmail(ctx context.Context, email stri
 		return nil, err
 	}
 
-	return toDomainEntity(&dbUser), nil
-}
+	return mappers.FromDatabaseModelToDomainEntity(&dbUser), nil
 
-// toDBModel convierte entidad dominio → modelo DB
-func toDBModel(user *entities.User) *UserModel {
-	return &UserModel{
-		ID:       user.ID,
-		Email:    user.Email,
-		Username: user.Username,
-		Password: user.Password,
-	}
-}
-
-// toDomainEntity convierte modelo DB → entidad dominio
-func toDomainEntity(dbUser *UserModel) *entities.User {
-	return &entities.User{
-		ID:        dbUser.ID,
-		Email:     dbUser.Email,
-		Username:  dbUser.Username,
-		Password:  dbUser.Password,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-	}
 }

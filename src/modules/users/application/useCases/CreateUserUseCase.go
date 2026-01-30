@@ -1,8 +1,15 @@
 package usecases
 
-import "context"
+import (
+	"context"
+	"yuno/src/modules/users/domain/repositories"
+)
 
-func CreateUserUseCase(
+type CreateUserUseCase struct {
+	userRepository repositories.UserRepository
+}
+
+func (uc *CreateUserUseCase) Execute(
 	ctx context.Context,
 	Username, Password, FirstName, LastName, Email, PhoneNumber string,
 ) {
